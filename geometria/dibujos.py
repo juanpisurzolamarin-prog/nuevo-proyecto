@@ -186,7 +186,7 @@ def dibujar_triangulo_con_letras(lienzo, puntos, color_relleno):
 
 def dibujar_dos_triangulos(lienzo, ancho, alto):
     # Recibe el lienzo y su tamaño.
-    # Dibuja △ABC a la izquierda y △DEF a la derecha, con la misma forma.
+    # Dibuja el triángulo ABC a la izquierda y el DEF a la derecha, con la misma forma.
     # No devuelve nada.
     dibujar_triangulo_con_letras(lienzo, vertices_abc(ancho, alto), color_abc)
     dibujar_triangulo_con_letras(lienzo, vertices_def(ancho, alto), color_def)

@@ -52,6 +52,10 @@ pantalla.confirmar_razon("Punto medio")
 ventana.lift()
 ventana.attributes("-topmost", True)
 ventana.update()
+fondo=ventana.winfo_rooty()+ventana.winfo_height()
+print("resultado", pantalla.etiqueta_resultado.winfo_rooty(), pantalla.etiqueta_resultado.cget("text")[:40])
+print("tabla abajo", pantalla.marco_filas.winfo_rooty()+pantalla.marco_filas.winfo_height())
+print("fondo ventana", fondo)
 
 ruta=r"c:\Users\juanp\OneDrive\Documentos\Nuevo proyecto\captura_comparar.png"
 x=ventana.winfo_rootx()

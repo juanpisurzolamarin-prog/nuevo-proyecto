@@ -511,7 +511,7 @@ def crear_boton_de_razon(marco, mensaje, fila, columna):
         font=("Segoe UI", 12),
         bg="#ffffff",
         activebackground="#d9e6fb",
-        wraplength=220,
+        wraplength=180,
         justify="center",
     )
     boton.grid(row=fila, column=columna, padx=4, pady=4, sticky="nsew")
@@ -523,18 +523,22 @@ def armar_razones(marco):
     # Pone un botón por cada razón que se usa en la tabla.
     # No devuelve nada.
     razones=[
-        ["Dado", "Bisectriz", "Punto medio", "Lado común"],
-        ["Propiedad reflexiva", "Perpendicular", "Ángulos opuestos por el vértice"],
+        ["Dado", "Bisectriz"],
+        ["Punto medio", "Lado común"],
+        ["Propiedad reflexiva", "Perpendicular"],
+        ["Ángulos opuestos por el vértice"],
     ]
     fila=0
     for grupo in razones:
         columna=0
         for razon in grupo:
-            crear_boton_de_razon(marco, razon, fila, columna)
+            boton=crear_boton_de_razon(marco, razon, fila, columna)
+            if len(grupo)==1:
+                boton.grid(columnspan=2)
             columna=columna+1
         fila=fila+1
     columna=0
-    while columna<4:
+    while columna<2:
         marco.grid_columnconfigure(columna, weight=1)
         columna=columna+1
 
