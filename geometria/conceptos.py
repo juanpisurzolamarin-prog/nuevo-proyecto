@@ -135,6 +135,7 @@ def texto_opuestos():
     # Devuelve el párrafo.
     texto="Cuando dos rectas se cruzan, forman cuatro ángulos."
     texto=texto+" Los que quedan frente a frente se llaman ángulos opuestos por el vértice y son iguales."
+    texto=texto+" En el dibujo, ∠AVB y ∠CVD son opuestos por el vértice."
     texto=texto+" En la columna Razón se escribe Ángulos opuestos por el vértice."
     return texto
 

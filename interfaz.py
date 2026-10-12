@@ -24,6 +24,7 @@ from geometria.pantalla import armar_pantalla_geometria, mostrar_inicio_geometri
 cuadro_expresion=None
 etiqueta_resultado=None
 logos_guardados=[]
+marco_inicio=None
 marco_menu=None
 marco_factorizar=None
 marco_plan=None
@@ -254,8 +255,9 @@ def nombres_de_los_casos():
 
 def ocultar_marcos():
     # No recibe datos.
-    # Esconde el menú, la factorización, el plan y la geometría.
+    # Esconde el inicio, el álgebra, la factorización, el plan y la geometría.
     # No devuelve nada.
+    marco_inicio.grid_remove()
     marco_menu.grid_remove()
     marco_factorizar.grid_remove()
     marco_plan.grid_remove()
@@ -271,7 +273,14 @@ def mostrar_geometria():
 
 def mostrar_menu():
     # No recibe datos.
-    # Muestra la lista de casos.
+    # Muestra los dos temas: álgebra y geometría.
+    # No devuelve nada.
+    ocultar_marcos()
+    marco_inicio.grid(row=0,column=0,sticky="nsew")
+
+def mostrar_algebra():
+    # No recibe datos.
+    # Muestra los casos de factorización y el botón para factorizar.
     # No devuelve nada.
     ocultar_marcos()
     marco_menu.grid(row=0,column=0,sticky="nsew")
@@ -323,9 +332,101 @@ def crear_boton_de_caso(marco,nombre,fila,columna):
     boton.bind("<Button-1>",al_abrir_caso)
     return boton
 
+def dibujar_icono_algebra(lienzo):
+    # Recibe el lienzo del botón de álgebra.
+    # Dibuja x al cuadrado para reconocer la factorización.
+    # No devuelve nada.
+    lienzo.create_text(90,46,text="x²",font=("Segoe UI",40,"bold"),fill="#2f6fed")
+    lienzo.create_text(90,96,text="+ bx + c",font=("Segoe UI",16),fill="#1d3557")
+
+def dibujar_icono_geometria(lienzo):
+    # Recibe el lienzo del botón de geometría.
+    # Dibuja dos triángulos para reconocer la congruencia.
+    # No devuelve nada.
+    lienzo.create_polygon(34,30,16,102,86,102,fill="#e7f0ff",outline="#1d3557",width=3)
+    lienzo.create_polygon(118,30,100,102,170,102,fill="#e8f6ef",outline="#0f766e",width=3)
+    lienzo.create_text(34,16,text="A",font=("Segoe UI",12,"bold"),fill="#c1121f")
+    lienzo.create_text(118,16,text="D",font=("Segoe UI",12,"bold"),fill="#c1121f")
+
+def enlazar_clic(widget,funcion):
+    # Recibe un cuadro y la función que debe correr al hacer clic.
+    # Pone ese clic en el cuadro y en lo que tiene dentro, como el icono.
+    # No devuelve nada.
+    widget.bind("<Button-1>",funcion)
+    for hijo in widget.winfo_children():
+        enlazar_clic(hijo,funcion)
+
+def al_pulsar_algebra(evento):
+    # Recibe el clic de la tarjeta de álgebra.
+    # Abre los casos de factorización.
+    # No devuelve nada.
+    mostrar_algebra()
+
+def al_pulsar_geometria(evento):
+    # Recibe el clic de la tarjeta de geometría.
+    # Abre la congruencia de triángulos.
+    # No devuelve nada.
+    mostrar_geometria()
+
+def crear_tarjeta(marco,titulo,detalle,color,dibujar,al_pulsar,columna):
+    # Recibe el marco, los textos, el color, el dibujo del icono y la columna.
+    # Arma un botón grande con icono para un tema.
+    # No devuelve nada.
+    tarjeta=tk.Frame(marco,bg="#ffffff",highlightbackground=color,highlightthickness=3,cursor="hand2")
+    tarjeta.grid(row=4,column=columna,padx=24,pady=12,sticky="nsew")
+    lienzo=tk.Canvas(tarjeta,width=180,height=120,bg="#ffffff",highlightthickness=0,cursor="hand2")
+    lienzo.grid(row=0,column=0,padx=36,pady=(18,0))
+    dibujar(lienzo)
+    nombre=tk.Label(tarjeta,text=titulo,font=("Segoe UI",22,"bold"),bg="#ffffff",fg=color,cursor="hand2")
+    nombre.grid(row=1,column=0,pady=(8,0))
+    texto=tk.Label(tarjeta,text=detalle,font=("Segoe UI",14),bg="#ffffff",fg="#33415c",cursor="hand2")
+    texto.grid(row=2,column=0,pady=(0,18))
+    tarjeta.grid_columnconfigure(0,weight=1)
+    enlazar_clic(tarjeta,al_pulsar)
+
+def armar_inicio(marco):
+    # Recibe el marco de la pantalla inicial.
+    # Pone el nombre del estudiante y los dos temas, cada uno con su icono.
+    # No devuelve nada.
+    logo=cargar_logo(marco)
+    if logo!=None:
+        logo.grid(row=0,column=0,columnspan=2,pady=(16,0))
+
+    titulo=tk.Label(
+        marco,
+        text="Matemáticas 8C",
+        font=("Segoe UI",26,"bold"),
+        bg="#eef3fa",
+        fg="#1d3557",
+    )
+    titulo.grid(row=1,column=0,columnspan=2,pady=(8,0))
+
+    estudiante=tk.Label(
+        marco,
+        text="Juan Pablo Urzola Marin",
+        font=("Segoe UI",16),
+        bg="#eef3fa",
+        fg="#1d3557",
+    )
+    estudiante.grid(row=2,column=0,columnspan=2,pady=(0,4))
+
+    ayuda=tk.Label(
+        marco,
+        text="Elige un tema.",
+        font=("Segoe UI",14),
+        bg="#eef3fa",
+        fg="#33415c",
+    )
+    ayuda.grid(row=3,column=0,columnspan=2,pady=(0,8))
+
+    crear_tarjeta(marco,"Álgebra","Factorización","#2f6fed",dibujar_icono_algebra,al_pulsar_algebra,0)
+    crear_tarjeta(marco,"Geometría","Congruencia de triángulos","#0f766e",dibujar_icono_geometria,al_pulsar_geometria,1)
+    marco.grid_columnconfigure(0,weight=1)
+    marco.grid_columnconfigure(1,weight=1)
+
 def armar_menu(marco):
-    # Recibe el marco del menú.
-    # Pone el logo, el nombre y un botón por cada caso.
+    # Recibe el marco del álgebra.
+    # Pone el logo, el botón para factorizar y un botón por cada caso.
     # No devuelve nada.
     logo=cargar_logo(marco)
     if logo!=None:
@@ -360,28 +461,25 @@ def armar_menu(marco):
         activeforeground="#ffffff",
         command=mostrar_factorizar,
     )
-    boton_factorizar.grid(row=3,column=0,columnspan=2,padx=16,pady=(0,6),sticky="ew")
-
-    boton_congruencia=tk.Button(
-        marco,
-        text="Congruencia de triángulos",
-        font=("Segoe UI",14,"bold"),
-        bg="#0f766e",
-        fg="#ffffff",
-        activebackground="#115e59",
-        activeforeground="#ffffff",
-        command=mostrar_geometria,
-    )
-    boton_congruencia.grid(row=4,column=0,columnspan=2,padx=16,pady=(0,12),sticky="ew")
+    boton_factorizar.grid(row=3,column=0,columnspan=2,padx=16,pady=(0,12),sticky="ew")
 
     casos=nombres_de_los_casos()
     indice=0
     while indice<len(casos):
         nombre=casos[indice][0]
-        fila=5+(indice//2)
+        fila=4+(indice//2)
         columna=indice%2
         crear_boton_de_caso(marco,nombre,fila,columna)
         indice=indice+1
+
+    boton_inicio=tk.Button(
+        marco,
+        text="Volver al inicio",
+        font=("Segoe UI",14),
+        bg="#ffffff",
+        command=mostrar_menu,
+    )
+    boton_inicio.grid(row=10,column=0,columnspan=2,padx=16,pady=(8,12),sticky="ew")
 
     marco.grid_columnconfigure(0,weight=1)
     marco.grid_columnconfigure(1,weight=1)
@@ -423,10 +521,10 @@ def armar_plan(marco):
 
     boton_volver=tk.Button(
         marco,
-        text="Volver al menú",
+        text="Volver a álgebra",
         font=("Segoe UI",14),
         bg="#ffffff",
-        command=mostrar_menu,
+        command=mostrar_algebra,
     )
     boton_volver.grid(row=2,column=0,columnspan=2,padx=16,pady=(8,16),sticky="ew")
 
@@ -552,10 +650,10 @@ def armar_factorizar(marco):
 
     boton_menu=tk.Button(
         marco,
-        text="Volver al menú",
+        text="Volver a álgebra",
         font=("Segoe UI",14),
         bg="#ffffff",
-        command=mostrar_menu,
+        command=mostrar_algebra,
     )
     boton_menu.grid(row=8,column=0,columnspan=10,padx=16,pady=(0,12),sticky="ew")
 
@@ -567,8 +665,9 @@ def armar_factorizar(marco):
 
 def crear_ventana():
     # No recibe datos.
-    # Arma el menú, la factorización, el plan y la congruencia de triángulos.
+    # Arma el inicio, el álgebra, la factorización, el plan y la congruencia.
     # Devuelve la ventana para poder mostrarla.
+    global marco_inicio
     global marco_menu
     global marco_factorizar
     global marco_plan
@@ -580,10 +679,12 @@ def crear_ventana():
     ventana.geometry("980x740")
     ventana.minsize(980,740)
 
+    marco_inicio=tk.Frame(ventana,bg="#eef3fa")
     marco_menu=tk.Frame(ventana,bg="#eef3fa")
     marco_factorizar=tk.Frame(ventana,bg="#eef3fa")
     marco_plan=tk.Frame(ventana,bg="#eef3fa")
     marco_geometria=tk.Frame(ventana,bg="#eef3fa")
+    armar_inicio(marco_inicio)
     armar_menu(marco_menu)
     armar_factorizar(marco_factorizar)
     armar_plan(marco_plan)

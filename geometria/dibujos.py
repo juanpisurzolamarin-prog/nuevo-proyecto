@@ -68,32 +68,51 @@ def lados_def():
     # Devuelve ["DE", "EF", "FD"].
     return ["DE", "EF", "FD"]
 
-def vertices_del_esquema(centro_x, alto, arriba, izquierda, derecha):
-    # Recibe el centro horizontal, el alto y los tres nombres.
+def medidas_del_triangulo(ancho, alto):
+    # Recibe el ancho y el alto del lienzo.
+    # Elige una base y una altura para que el triángulo quepa y no quede estirado.
+    # Devuelve el techo, el piso y la mitad de la base.
+    mitad=ancho*0.16
+    if mitad>140:
+        mitad=140
+    if mitad<70:
+        mitad=70
+    alto_triangulo=mitad*1.2
+    alto_util=alto-80
+    if alto_util<100:
+        alto_util=100
+    if alto_triangulo>alto_util:
+        alto_triangulo=alto_util
+    techo=(alto-alto_triangulo)/2
+    if techo<36:
+        techo=36
+    piso=techo+alto_triangulo
+    if piso>alto-36:
+        piso=alto-36
+    return techo, piso, mitad
+
+def vertices_del_esquema(centro_x, ancho, alto, arriba, izquierda, derecha):
+    # Recibe el centro horizontal, el tamaño del lienzo y los tres nombres.
     # Arma un triángulo igual en cualquier lado de la pantalla.
     # Devuelve el diccionario de vértices.
-    techo=64
-    piso=alto-28
-    if piso<techo+80:
-        piso=techo+80
-    mitad=105
+    techo, piso, mitad=medidas_del_triangulo(ancho, alto)
     puntos={}
     puntos[arriba]=(centro_x, techo)
     puntos[izquierda]=(centro_x-mitad, piso)
-    puntos[derecha]=(centro_x+mitad-24, piso-16)
+    puntos[derecha]=(centro_x+mitad-16, piso-10)
     return puntos
 
 def vertices_abc(ancho, alto):
     # Recibe el ancho y el alto del lienzo.
     # Coloca A arriba, B abajo a la izquierda y C abajo a la derecha.
     # Devuelve las tres coordenadas.
-    return vertices_del_esquema(ancho*0.27, alto, "A", "B", "C")
+    return vertices_del_esquema(ancho*0.27, ancho, alto, "A", "B", "C")
 
 def vertices_def(ancho, alto):
     # Recibe el ancho y el alto del lienzo.
     # Coloca D arriba, E abajo a la izquierda y F abajo a la derecha.
     # Devuelve las tres coordenadas.
-    return vertices_del_esquema(ancho*0.73, alto, "D", "E", "F")
+    return vertices_del_esquema(ancho*0.73, ancho, alto, "D", "E", "F")
 
 def puntos_de_un_triangulo(triangulo, ancho, alto):
     # Recibe "ABC" o "DEF" y el tamaño del lienzo.
@@ -406,6 +425,279 @@ def parte_bajo_el_clic(x, y, ancho, alto):
         return parte
     return lado_bajo_el_clic(x, y, ancho, alto)
 
+def puntos_de_la_figura(ancho, alto):
+    # Recibe el ancho y el alto del lienzo.
+    # Coloca A arriba, B y C abajo, y D en la mitad de BC.
+    # Devuelve las cuatro coordenadas.
+    techo=56
+    piso=alto-64
+    if piso<techo+140:
+        piso=techo+140
+    mitad=ancho*0.32
+    if mitad>180:
+        mitad=180
+    if mitad<90:
+        mitad=90
+    centro=ancho/2
+    puntos={}
+    puntos["A"]=(centro, techo)
+    puntos["B"]=(centro-mitad, piso)
+    puntos["C"]=(centro+mitad, piso)
+    puntos["D"]=punto_medio(puntos["B"], puntos["C"])
+    return puntos
+
+def lados_de_la_figura():
+    # No recibe datos.
+    # Lista los lados de △ABD y △ACD. AD está en los dos.
+    # Devuelve una lista de diccionarios.
+    lados=[]
+    lados.append({"nombre":"AB","triangulo":"ABD","comun":False})
+    lados.append({"nombre":"BD","triangulo":"ABD","comun":False})
+    lados.append({"nombre":"AC","triangulo":"ACD","comun":False})
+    lados.append({"nombre":"CD","triangulo":"ACD","comun":False})
+    lados.append({"nombre":"AD","triangulo":"ABD","comun":True})
+    return lados
+
+def angulos_de_la_figura():
+    # No recibe datos.
+    # Lista los ángulos. En A y en D hay dos, uno para cada triángulo.
+    # Devuelve una lista de diccionarios.
+    angulos=[]
+    angulos.append({"nombre":"BAD","triangulo":"ABD","vertice":"A","rayo_1":"B","rayo_2":"D"})
+    angulos.append({"nombre":"CAD","triangulo":"ACD","vertice":"A","rayo_1":"C","rayo_2":"D"})
+    angulos.append({"nombre":"B","triangulo":"ABD","vertice":"B","rayo_1":"A","rayo_2":"D"})
+    angulos.append({"nombre":"C","triangulo":"ACD","vertice":"C","rayo_1":"A","rayo_2":"D"})
+    angulos.append({"nombre":"ADB","triangulo":"ABD","vertice":"D","rayo_1":"A","rayo_2":"B"})
+    angulos.append({"nombre":"ADC","triangulo":"ACD","vertice":"D","rayo_1":"A","rayo_2":"C"})
+    return angulos
+
+def direccion_del_angulo(origen, extremo_1, extremo_2):
+    # Recibe el vértice y un punto de cada lado.
+    # Suma las dos direcciones para ir por el medio del ángulo.
+    # Devuelve el avance en x y en y, de largo 1.
+    dx1=extremo_1[0]-origen[0]
+    dy1=extremo_1[1]-origen[1]
+    largo1=math.sqrt(dx1*dx1+dy1*dy1)
+    dx2=extremo_2[0]-origen[0]
+    dy2=extremo_2[1]-origen[1]
+    largo2=math.sqrt(dx2*dx2+dy2*dy2)
+    if largo1==0 or largo2==0:
+        return (0, 1)
+    ux1=dx1/largo1
+    uy1=dy1/largo1
+    ux2=dx2/largo2
+    uy2=dy2/largo2
+    sx=ux1+ux2
+    sy=uy1+uy2
+    largo=math.sqrt(sx*sx+sy*sy)
+    if largo<0.2:
+        return (-uy1, ux1)
+    return (sx/largo, sy/largo)
+
+def punto_dentro_del_angulo(origen, extremo_1, extremo_2, paso):
+    # Recibe el vértice, un punto de cada lado y cuánto hay que entrar.
+    # Camina por el medio del ángulo hasta quedar lejos de los dos lados.
+    # Devuelve la coordenada de esa etiqueta.
+    direccion=direccion_del_angulo(origen, extremo_1, extremo_2)
+    paso_actual=paso
+    lugar=(origen[0]+direccion[0]*paso_actual, origen[1]+direccion[1]*paso_actual)
+    while paso_actual<170:
+        x=origen[0]+direccion[0]*paso_actual
+        y=origen[1]+direccion[1]*paso_actual
+        lugar=(x, y)
+        lejos_1=distancia_al_segmento(x, y, origen[0], origen[1], extremo_1[0], extremo_1[1])
+        lejos_2=distancia_al_segmento(x, y, origen[0], origen[1], extremo_2[0], extremo_2[1])
+        if lejos_1>=28:
+            if lejos_2>=28:
+                return lugar
+        paso_actual=paso_actual+10
+    return lugar
+
+def etiqueta_del_angulo(angulo, puntos):
+    # Recibe un ángulo de la figura y los vértices.
+    # Calcula dónde se escribe su nombre, dentro del ángulo.
+    # Devuelve la coordenada.
+    origen=puntos[angulo["vertice"]]
+    extremo_1=puntos[angulo["rayo_1"]]
+    extremo_2=puntos[angulo["rayo_2"]]
+    return punto_dentro_del_angulo(origen, extremo_1, extremo_2, 46)
+
+def dibujar_figura_compartida(lienzo, ancho, alto):
+    # Recibe el lienzo y su tamaño.
+    # Dibuja △ABD y △ACD con D en la mitad y AD en los dos.
+    # No devuelve nada.
+    puntos=puntos_de_la_figura(ancho, alto)
+    izquierda={}
+    izquierda["A"]=puntos["A"]
+    izquierda["B"]=puntos["B"]
+    izquierda["D"]=puntos["D"]
+    derecha={}
+    derecha["A"]=puntos["A"]
+    derecha["C"]=puntos["C"]
+    derecha["D"]=puntos["D"]
+    relleno_del_triangulo(lienzo, izquierda, color_abc)
+    relleno_del_triangulo(lienzo, derecha, color_def)
+    linea(lienzo, puntos["A"][0], puntos["A"][1], puntos["B"][0], puntos["B"][1], color_linea, 3)
+    linea(lienzo, puntos["B"][0], puntos["B"][1], puntos["D"][0], puntos["D"][1], color_linea, 3)
+    linea(lienzo, puntos["A"][0], puntos["A"][1], puntos["C"][0], puntos["C"][1], color_linea, 3)
+    linea(lienzo, puntos["C"][0], puntos["C"][1], puntos["D"][0], puntos["D"][1], color_linea, 3)
+    linea(lienzo, puntos["A"][0], puntos["A"][1], puntos["D"][0], puntos["D"][1], "#c1121f", 5)
+    dx=puntos["D"][0]
+    dy=puntos["D"][1]
+    lienzo.create_oval(dx-5, dy-5, dx+5, dy+5, fill="#c1121f", outline="#c1121f")
+    escribir(lienzo, puntos["A"][0], puntos["A"][1]-18, "A", color_linea, 16)
+    escribir(lienzo, puntos["B"][0]-18, puntos["B"][1]+16, "B", "#2f6fed", 16)
+    escribir(lienzo, puntos["C"][0]+18, puntos["C"][1]+16, "C", "#2d6a4f", 16)
+    escribir(lienzo, dx-22, dy+18, "D", "#c1121f", 16)
+    escribir(lienzo, dx+52, dy+18, "punto medio", "#c1121f", 11)
+    medio_ad=punto_medio(puntos["A"], puntos["D"])
+    # A mitad de altura, el lado AC está a la mitad del camino hacia C.
+    x_del_lado_ac=puntos["A"][0]+(puntos["C"][0]-puntos["A"][0])*0.5
+    x_bisectriz=x_del_lado_ac+64
+    if x_bisectriz>ancho-70:
+        x_bisectriz=ancho-70
+    escribir(lienzo, x_bisectriz, medio_ad[1], "bisectriz", "#c1121f", 11)
+    for angulo in angulos_de_la_figura():
+        lugar=etiqueta_del_angulo(angulo, puntos)
+        escribir(lienzo, lugar[0], lugar[1], angulo["nombre"], color_linea, 11)
+    # Los nombres van más abajo, donde el triángulo es ancho, lejos de AD.
+    bajo=0.62
+    y_nombre=puntos["A"][1]+(puntos["D"][1]-puntos["A"][1])*bajo
+    x_ad=puntos["A"][0]+(puntos["D"][0]-puntos["A"][0])*bajo
+    x_ab=puntos["A"][0]+(puntos["B"][0]-puntos["A"][0])*bajo
+    x_ac=puntos["A"][0]+(puntos["C"][0]-puntos["A"][0])*bajo
+    x_abd=x_ad+(x_ab-x_ad)*0.5
+    x_acd=x_ad+(x_ac-x_ad)*0.5
+    escribir(lienzo, x_abd, y_nombre, "△ABD", color_suave, 12)
+    escribir(lienzo, x_acd, y_nombre, "△ACD", color_suave, 12)
+
+def dibujar_lado_compartido(lienzo, ancho, alto, nombre, cantidad, color):
+    # Recibe el lado, por ejemplo "BD", y cuántas rayitas lleva.
+    # Las dibuja sobre ese lado de la figura compartida.
+    # No devuelve nada.
+    puntos=puntos_de_la_figura(ancho, alto)
+    p1=puntos[nombre[0]]
+    p2=puntos[nombre[1]]
+    dibujar_rayitas_del_lado(lienzo, p1[0], p1[1], p2[0], p2[1], cantidad, color)
+
+def buscar_angulo_compartido(nombre):
+    # Recibe el nombre de un ángulo, por ejemplo "BAD".
+    # Lo busca en la figura compartida.
+    # Devuelve el diccionario. Si no está, devuelve None.
+    for angulo in angulos_de_la_figura():
+        if angulo["nombre"]==nombre:
+            return angulo
+    return None
+
+def dibujar_angulo_compartido(lienzo, ancho, alto, nombre, cantidad, color):
+    # Recibe el ángulo, por ejemplo "BAD", y cuántos arcos lleva.
+    # Dibuja los arcos entre sus dos lados.
+    # No devuelve nada.
+    angulo=buscar_angulo_compartido(nombre)
+    if angulo==None:
+        return
+    puntos=puntos_de_la_figura(ancho, alto)
+    origen=puntos[angulo["vertice"]]
+    p1=puntos[angulo["rayo_1"]]
+    p2=puntos[angulo["rayo_2"]]
+    radio=16
+    indice=0
+    while indice<cantidad:
+        dibujar_arco(lienzo, origen[0], origen[1], p1[0], p1[1], p2[0], p2[1], radio, color)
+        radio=radio+8
+        indice=indice+1
+
+def dibujar_marcas_compartidas(lienzo, ancho, alto, marcas):
+    # Recibe el lienzo, el tamaño y las marcas.
+    # Dibuja rayitas y arcos. Si el lado es AD, lo marca una sola vez.
+    # No devuelve nada.
+    numero_de_lado=0
+    numero_de_angulo=0
+    indice=0
+    for marca in marcas:
+        color=color_de_la_marca(indice)
+        if marca["tipo"]=="lado":
+            numero_de_lado=numero_de_lado+1
+            cantidad=cantidad_de_rayitas(numero_de_lado)
+            dibujar_lado_compartido(lienzo, ancho, alto, marca["parte_abc"], cantidad, color)
+            if marca["parte_abc"]!=marca["parte_def"]:
+                dibujar_lado_compartido(lienzo, ancho, alto, marca["parte_def"], cantidad, color)
+        else:
+            numero_de_angulo=numero_de_angulo+1
+            cantidad=cantidad_de_rayitas(numero_de_angulo)
+            dibujar_angulo_compartido(lienzo, ancho, alto, marca["parte_abc"], cantidad, color)
+            if marca["parte_abc"]!=marca["parte_def"]:
+                dibujar_angulo_compartido(lienzo, ancho, alto, marca["parte_def"], cantidad, color)
+        indice=indice+1
+
+def dibujar_parte_compartida(lienzo, ancho, alto, parte, color):
+    # Recibe la parte elegida de la figura compartida.
+    # La dibuja más gruesa, o rodea el nombre del ángulo.
+    # No devuelve nada.
+    puntos=puntos_de_la_figura(ancho, alto)
+    if parte["tipo"]=="lado":
+        nombre=parte["nombre"]
+        p1=puntos[nombre[0]]
+        p2=puntos[nombre[1]]
+        linea(lienzo, p1[0], p1[1], p2[0], p2[1], color, 6)
+        return
+    angulo=buscar_angulo_compartido(parte["nombre"])
+    if angulo==None:
+        return
+    lugar=etiqueta_del_angulo(angulo, puntos)
+    radio=16
+    lienzo.create_oval(lugar[0]-radio, lugar[1]-radio, lugar[0]+radio, lugar[1]+radio, outline=color, width=3)
+    escribir(lienzo, lugar[0], lugar[1], parte["nombre"], color, 11)
+
+def angulo_de_la_figura_bajo_el_clic(x, y, ancho, alto):
+    # Recibe el clic y el tamaño del lienzo.
+    # Busca si cayó sobre el nombre de un ángulo, como BAD o ADB.
+    # Devuelve la parte. Si no cayó en un ángulo, devuelve None.
+    puntos=puntos_de_la_figura(ancho, alto)
+    mejor=None
+    mejor_distancia=22
+    for angulo in angulos_de_la_figura():
+        lugar=etiqueta_del_angulo(angulo, puntos)
+        dist=distancia(x, y, lugar[0], lugar[1])
+        if dist<=mejor_distancia:
+            mejor_distancia=dist
+            mejor={}
+            mejor["triangulo"]=angulo["triangulo"]
+            mejor["tipo"]="angulo"
+            mejor["nombre"]=angulo["nombre"]
+            mejor["comun"]=False
+    return mejor
+
+def lado_de_la_figura_bajo_el_clic(x, y, ancho, alto):
+    # Recibe el clic y el tamaño del lienzo.
+    # Busca si cayó sobre AB, BD, AC, CD o el lado común AD.
+    # Devuelve la parte. Si no cayó en un lado, devuelve None.
+    puntos=puntos_de_la_figura(ancho, alto)
+    mejor=None
+    mejor_distancia=distancia_maxima_al_lado
+    for lado in lados_de_la_figura():
+        nombre=lado["nombre"]
+        p1=puntos[nombre[0]]
+        p2=puntos[nombre[1]]
+        dist=distancia_al_segmento(x, y, p1[0], p1[1], p2[0], p2[1])
+        if dist<=mejor_distancia:
+            mejor_distancia=dist
+            mejor={}
+            mejor["triangulo"]=lado["triangulo"]
+            mejor["tipo"]="lado"
+            mejor["nombre"]=nombre
+            mejor["comun"]=lado["comun"]
+    return mejor
+
+def parte_de_la_figura_compartida(x, y, ancho, alto):
+    # Recibe el clic y el tamaño del lienzo.
+    # Mira primero los lados, para que AD no se confunda con un ángulo.
+    # Devuelve la parte. Si el clic cayó fuera, devuelve None.
+    parte=lado_de_la_figura_bajo_el_clic(x, y, ancho, alto)
+    if parte!=None:
+        return parte
+    return angulo_de_la_figura_bajo_el_clic(x, y, ancho, alto)
+
 def dibujar_triangulo_fijo(lienzo, a, b, c, color):
     # Recibe tres puntos y el color.
     # Dibuja un triángulo pequeño para un concepto.
@@ -426,12 +718,12 @@ def dibujar_esquema_congruencia(lienzo):
     f=(470, 176)
     dibujar_triangulo_fijo(lienzo, a, b, c, color_linea)
     dibujar_triangulo_fijo(lienzo, d, e, f, color_linea)
-    escribir(lienzo, 90, 24, "A", color_linea, 13)
-    escribir(lienzo, 24, 182, "B", color_linea, 13)
-    escribir(lienzo, 206, 188, "C", color_linea, 13)
-    escribir(lienzo, 390, 24, "D", color_linea, 13)
-    escribir(lienzo, 300, 182, "E", color_linea, 13)
-    escribir(lienzo, 486, 188, "F", color_linea, 13)
+    escribir(lienzo, 90, 24, "A", "#c1121f", 14)
+    escribir(lienzo, 24, 182, "B", "#2f6fed", 14)
+    escribir(lienzo, 206, 188, "C", "#2d6a4f", 14)
+    escribir(lienzo, 390, 24, "D", "#c1121f", 14)
+    escribir(lienzo, 300, 182, "E", "#2f6fed", 14)
+    escribir(lienzo, 486, 188, "F", "#2d6a4f", 14)
     dibujar_rayitas_del_lado(lienzo, a[0], a[1], b[0], b[1], 1, "#c1121f")
     dibujar_rayitas_del_lado(lienzo, d[0], d[1], e[0], e[1], 1, "#c1121f")
     dibujar_rayitas_del_lado(lienzo, b[0], b[1], c[0], c[1], 2, "#2f6fed")
@@ -480,7 +772,13 @@ def dibujar_esquema_lll(lienzo):
     dibujar_rayitas_del_lado(lienzo, e[0], e[1], f[0], f[1], 2, "#2f6fed")
     dibujar_rayitas_del_lado(lienzo, c[0], c[1], a[0], a[1], 3, "#2d6a4f")
     dibujar_rayitas_del_lado(lienzo, f[0], f[1], d[0], d[1], 3, "#2d6a4f")
-    escribir(lienzo, 260, 210, "AB ≅ DE,  BC ≅ EF,  CA ≅ FD", color_linea, 12)
+    escribir(lienzo, a[0], a[1]-18, "A", "#c1121f", 14)
+    escribir(lienzo, b[0]-16, b[1]+10, "B", "#2f6fed", 14)
+    escribir(lienzo, c[0]+16, c[1]+6, "C", "#2d6a4f", 14)
+    escribir(lienzo, d[0], d[1]-18, "D", "#c1121f", 14)
+    escribir(lienzo, e[0]-16, e[1]+10, "E", "#2f6fed", 14)
+    escribir(lienzo, f[0]+16, f[1]+6, "F", "#2d6a4f", 14)
+    escribir(lienzo, 260, 214, "A con D,  B con E,  C con F", color_linea, 12)
 
 def dibujar_esquema_lal(lienzo):
     # Recibe el lienzo del concepto.
@@ -500,12 +798,12 @@ def dibujar_esquema_lal(lienzo):
     linea(lienzo, f[0], f[1], d[0], d[1], color_suave, 2)
     dibujar_arco(lienzo, b[0], b[1], a[0], a[1], c[0], c[1], 22, "#9a3412")
     dibujar_arco(lienzo, e[0], e[1], d[0], d[1], f[0], f[1], 22, "#9a3412")
-    escribir(lienzo, 70, 20, "A", color_linea, 12)
-    escribir(lienzo, 20, 186, "B", "#9a3412", 12)
-    escribir(lienzo, 210, 150, "C", color_linea, 12)
-    escribir(lienzo, 390, 20, "D", color_linea, 12)
-    escribir(lienzo, 310, 186, "E", "#9a3412", 12)
-    escribir(lienzo, 500, 150, "F", color_linea, 12)
+    escribir(lienzo, 70, 20, "A", "#c1121f", 14)
+    escribir(lienzo, 20, 186, "B", "#9a3412", 14)
+    escribir(lienzo, 210, 150, "C", "#2d6a4f", 14)
+    escribir(lienzo, 390, 20, "D", "#c1121f", 14)
+    escribir(lienzo, 310, 186, "E", "#9a3412", 14)
+    escribir(lienzo, 500, 150, "F", "#2d6a4f", 14)
     escribir(lienzo, 260, 210, "∠B está entre AB y BC", color_linea, 12)
 
 def dibujar_esquema_ala(lienzo):
@@ -528,10 +826,12 @@ def dibujar_esquema_ala(lienzo):
     dibujar_arco(lienzo, b[0], b[1], a[0], a[1], c[0], c[1], 22, "#2f6fed")
     dibujar_arco(lienzo, d[0], d[1], e[0], e[1], f[0], f[1], 22, "#c1121f")
     dibujar_arco(lienzo, e[0], e[1], d[0], d[1], f[0], f[1], 22, "#2f6fed")
-    escribir(lienzo, 110, 18, "A", "#c1121f", 12)
-    escribir(lienzo, 18, 186, "B", "#2f6fed", 12)
-    escribir(lienzo, 400, 18, "D", "#c1121f", 12)
-    escribir(lienzo, 308, 186, "E", "#2f6fed", 12)
+    escribir(lienzo, 110, 18, "A", "#c1121f", 14)
+    escribir(lienzo, 18, 186, "B", "#2f6fed", 14)
+    escribir(lienzo, c[0]+16, c[1]-8, "C", "#2d6a4f", 14)
+    escribir(lienzo, 400, 18, "D", "#c1121f", 14)
+    escribir(lienzo, 308, 186, "E", "#2f6fed", 14)
+    escribir(lienzo, f[0]+16, f[1]-8, "F", "#2d6a4f", 14)
     escribir(lienzo, 260, 210, "AB está entre ∠A y ∠B", color_linea, 12)
 
 def dibujar_esquema_aaa(lienzo):
@@ -552,7 +852,13 @@ def dibujar_esquema_aaa(lienzo):
     dibujar_arco(lienzo, e[0], e[1], d[0], d[1], f[0], f[1], 16, "#2f6fed")
     dibujar_arco(lienzo, c[0], c[1], a[0], a[1], b[0], b[1], 16, "#2d6a4f")
     dibujar_arco(lienzo, f[0], f[1], d[0], d[1], e[0], e[1], 16, "#2d6a4f")
-    escribir(lienzo, 260, 214, "mismos ángulos, distinto tamaño", color_linea, 12)
+    escribir(lienzo, a[0], a[1]-16, "A", "#c1121f", 14)
+    escribir(lienzo, b[0]-16, b[1]+4, "B", "#2f6fed", 14)
+    escribir(lienzo, c[0]+16, c[1]+4, "C", "#2d6a4f", 14)
+    escribir(lienzo, d[0], d[1]-16, "D", "#c1121f", 14)
+    escribir(lienzo, e[0]-16, e[1], "E", "#2f6fed", 14)
+    escribir(lienzo, f[0]+14, f[1], "F", "#2d6a4f", 14)
+    escribir(lienzo, 260, 214, "A con D,  B con E,  C con F", color_linea, 12)
 
 def dibujar_esquema_dado(lienzo):
     # Recibe el lienzo del concepto.
@@ -568,10 +874,12 @@ def dibujar_esquema_dado(lienzo):
     dibujar_triangulo_fijo(lienzo, d, e, f, color_linea)
     dibujar_rayitas_del_lado(lienzo, a[0], a[1], b[0], b[1], 1, "#c1121f")
     dibujar_rayitas_del_lado(lienzo, d[0], d[1], e[0], e[1], 1, "#c1121f")
-    escribir(lienzo, 70, 20, "A", color_linea, 12)
-    escribir(lienzo, 18, 146, "B", color_linea, 12)
-    escribir(lienzo, 250, 20, "D", color_linea, 12)
-    escribir(lienzo, 196, 146, "E", color_linea, 12)
+    escribir(lienzo, 70, 20, "A", "#c1121f", 14)
+    escribir(lienzo, 16, 146, "B", "#2f6fed", 14)
+    escribir(lienzo, c[0]+12, c[1]+12, "C", "#2d6a4f", 14)
+    escribir(lienzo, 250, 20, "D", "#c1121f", 14)
+    escribir(lienzo, 196, 146, "E", "#2f6fed", 14)
+    escribir(lienzo, f[0]-4, f[1]-18, "F", "#2d6a4f", 14)
     lienzo.create_rectangle(360, 70, 530, 150, outline=color_linea, width=2, fill="#fff7e6")
     escribir(lienzo, 445, 96, "Afirmación", color_suave, 11)
     escribir(lienzo, 445, 122, "AB ≅ DE", color_linea, 13)
@@ -649,10 +957,10 @@ def dibujar_esquema_perpendicular(lienzo):
     linea(lienzo, 270, 24, 270, 210, color_linea, 3)
     linea(lienzo, 270, 96, 294, 96, "#c1121f", 2)
     linea(lienzo, 294, 96, 294, 120, "#c1121f", 2)
-    escribir(lienzo, 250, 36, "A", color_linea, 13)
-    escribir(lienzo, 250, 200, "D", color_linea, 13)
-    escribir(lienzo, 56, 100, "B", color_linea, 13)
-    escribir(lienzo, 490, 100, "C", color_linea, 13)
+    escribir(lienzo, 288, 24, "A", color_linea, 14)
+    escribir(lienzo, 288, 204, "D", color_linea, 14)
+    escribir(lienzo, 40, 98, "B", color_linea, 14)
+    escribir(lienzo, 500, 98, "C", color_linea, 14)
     escribir(lienzo, 400, 70, "90°", "#c1121f", 14)
 
 def dibujar_esquema_opuestos(lienzo):
@@ -668,7 +976,12 @@ def dibujar_esquema_opuestos(lienzo):
     linea(lienzo, izquierda_abajo[0], izquierda_abajo[1], derecha_arriba[0], derecha_arriba[1], color_linea, 3)
     dibujar_arco(lienzo, centro[0], centro[1], izquierda_arriba[0], izquierda_arriba[1], izquierda_abajo[0], izquierda_abajo[1], 28, "#c1121f")
     dibujar_arco(lienzo, centro[0], centro[1], derecha_abajo[0], derecha_abajo[1], derecha_arriba[0], derecha_arriba[1], 28, "#c1121f")
-    escribir(lienzo, 270, 214, "ángulos opuestos por el vértice", color_linea, 12)
+    escribir(lienzo, 52, 22, "A", "#2f6fed", 14)
+    escribir(lienzo, 52, 186, "B", "#2d6a4f", 14)
+    escribir(lienzo, 492, 186, "C", "#2f6fed", 14)
+    escribir(lienzo, 492, 22, "D", "#2d6a4f", 14)
+    escribir(lienzo, 270, 96, "V", color_linea, 14)
+    escribir(lienzo, 270, 214, "∠AVB ≅ ∠CVD", color_linea, 12)
 
 def dibujar_concepto(lienzo, clave):
     # Recibe el lienzo y la clave, por ejemplo "bisectriz".

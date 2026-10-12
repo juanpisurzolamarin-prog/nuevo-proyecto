@@ -1,6 +1,6 @@
 # Criterios de congruencia LLL, LAL y ALA.
 # Cada criterio está en su propia función.
-# La correspondencia usada es △ABC ≅ △DEF.
+# La correspondencia cambia según la figura que se está comparando.
 
 lados_correspondientes={
     "AB":"DE",
@@ -25,6 +25,62 @@ grupos_ala=[
     ["B","BC","C"],
     ["C","CA","A"],
 ]
+
+nombre_del_primer_triangulo="△ABC"
+nombre_del_segundo_triangulo="△DEF"
+
+
+def usar_triangulos_separados():
+    # No recibe datos.
+    # Deja la correspondencia de △ABC con △DEF.
+    # No devuelve nada.
+    global lados_correspondientes
+    global angulos_correspondientes
+    global grupos_lal
+    global grupos_ala
+    global nombre_del_primer_triangulo
+    global nombre_del_segundo_triangulo
+    lados_correspondientes={}
+    lados_correspondientes["AB"]="DE"
+    lados_correspondientes["BC"]="EF"
+    lados_correspondientes["CA"]="FD"
+    angulos_correspondientes={}
+    angulos_correspondientes["A"]="D"
+    angulos_correspondientes["B"]="E"
+    angulos_correspondientes["C"]="F"
+    grupos_lal=[["AB","B","BC"],["BC","C","CA"],["CA","A","AB"]]
+    grupos_ala=[["A","AB","B"],["B","BC","C"],["C","CA","A"]]
+    nombre_del_primer_triangulo="△ABC"
+    nombre_del_segundo_triangulo="△DEF"
+
+def usar_misma_figura():
+    # No recibe datos.
+    # Deja la correspondencia de △ABD con △ACD.
+    # No devuelve nada.
+    global lados_correspondientes
+    global angulos_correspondientes
+    global grupos_lal
+    global grupos_ala
+    global nombre_del_primer_triangulo
+    global nombre_del_segundo_triangulo
+    lados_correspondientes={}
+    lados_correspondientes["AB"]="AC"
+    lados_correspondientes["BD"]="CD"
+    lados_correspondientes["AD"]="AD"
+    angulos_correspondientes={}
+    angulos_correspondientes["BAD"]="CAD"
+    angulos_correspondientes["B"]="C"
+    angulos_correspondientes["ADB"]="ADC"
+    grupos_lal=[["AB","B","BD"],["BD","ADB","AD"],["AD","BAD","AB"]]
+    grupos_ala=[["BAD","AB","B"],["B","BD","ADB"],["ADB","AD","BAD"]]
+    nombre_del_primer_triangulo="△ABD"
+    nombre_del_segundo_triangulo="△ACD"
+
+def texto_de_los_triangulos():
+    # No recibe datos.
+    # Escribe los dos triángulos de la figura que está activa.
+    # Devuelve "△ABC ≅ △DEF" o "△ABD ≅ △ACD".
+    return nombre_del_primer_triangulo+" ≅ "+nombre_del_segundo_triangulo
 
 
 def lado_que_corresponde(lado_abc):
@@ -69,12 +125,9 @@ def se_cumple_lll(marcas):
     # Recibe la lista de marcas.
     # Revisa si los tres pares de lados correspondientes están marcados.
     # Devuelve True si se cumple LLL. Si falta un lado, devuelve False.
-    if tiene_lado(marcas,"AB")==False:
-        return False
-    if tiene_lado(marcas,"BC")==False:
-        return False
-    if tiene_lado(marcas,"CA")==False:
-        return False
+    for lado in lados_correspondientes:
+        if tiene_lado(marcas, lado)==False:
+            return False
     return True
 
 def se_cumple_lal(marcas):
@@ -144,7 +197,7 @@ def filas_de_la_comprobacion(marcas):
         filas.append([texto_de_afirmacion(marca), marca["razon"]])
     razon=razon_de_la_congruencia(marcas)
     if razon!="":
-        filas.append(["△ABC ≅ △DEF", razon])
+        filas.append([texto_de_los_triangulos(), razon])
     return filas
 
 def contar_lados_correspondientes(marcas):
@@ -169,21 +222,22 @@ def contar_angulos_correspondientes(marcas):
 
 def frases_de_marcas_sin_correspondencia(marcas):
     # Recibe la lista de marcas.
-    # Busca las que unen partes que no se corresponden en △ABC ≅ △DEF.
+    # Busca las que unen partes que no se corresponden en la figura activa.
     # Devuelve una frase por cada una.
+    figura=texto_de_los_triangulos()
     frases=[]
     for marca in marcas:
         if marca["tipo"]=="lado":
             esperado=lado_que_corresponde(marca["parte_abc"])
             if marca["parte_def"]!=esperado:
                 frase=marca["parte_abc"]+" no corresponde a "+marca["parte_def"]+"."
-                frase=frase+" En △ABC ≅ △DEF, el lado "+marca["parte_abc"]+" corresponde a "+esperado+"."
+                frase=frase+" En "+figura+", el lado "+marca["parte_abc"]+" corresponde a "+esperado+"."
                 frases.append(frase)
         else:
             esperado=angulo_que_corresponde(marca["parte_abc"])
             if marca["parte_def"]!=esperado:
                 frase="∠"+marca["parte_abc"]+" no corresponde a ∠"+marca["parte_def"]+"."
-                frase=frase+" En △ABC ≅ △DEF, el ángulo "+marca["parte_abc"]+" corresponde a "+esperado+"."
+                frase=frase+" En "+figura+", el ángulo "+marca["parte_abc"]+" corresponde a "+esperado+"."
                 frases.append(frase)
     return frases
 
@@ -200,11 +254,11 @@ def texto_del_resultado(marcas):
     # Dice si los triángulos ya son congruentes o si todavía falta información.
     # Devuelve el párrafo que va debajo de la tabla.
     if len(marcas)==0:
-        return "Todavía no hay marcas.\nHaz clic en un lado o en la letra de un ángulo."
+        return "Aún no hay marcas."
 
     nombres=criterios_que_se_cumplen(marcas)
     if len(nombres)==0:
-        texto="Todavía no hay información suficiente para concluir que △ABC ≅ △DEF."
+        texto="Todavía no hay información suficiente para concluir que "+texto_de_los_triangulos()+"."
         lados=contar_lados_correspondientes(marcas)
         angulos=contar_angulos_correspondientes(marcas)
         texto=texto+"\nLados correspondientes: "+str(lados)+" de 3."

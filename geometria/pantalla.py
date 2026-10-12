@@ -4,8 +4,8 @@
 
 import tkinter as tk
 from geometria.conceptos import lista_de_conceptos, buscar_concepto
-from geometria.criterios import filas_de_la_comprobacion, texto_del_resultado
-from geometria.dibujos import dibujar_concepto, dibujar_dos_triangulos, dibujar_marcas, dibujar_parte_resaltada, parte_bajo_el_clic
+from geometria.criterios import filas_de_la_comprobacion, texto_de_los_triangulos, texto_del_resultado, usar_misma_figura, usar_triangulos_separados
+from geometria.dibujos import dibujar_concepto, dibujar_dos_triangulos, dibujar_figura_compartida, dibujar_marcas, dibujar_marcas_compartidas, dibujar_parte_compartida, dibujar_parte_resaltada, parte_bajo_el_clic, parte_de_la_figura_compartida
 
 marco_inicio=None
 marco_lista=None
@@ -23,7 +23,13 @@ marco_razones=None
 marcas=[]
 parte_elegida=None
 par_pendiente=None
-aviso="Haz clic en un lado o en la letra de un ángulo."
+aviso="Toca un lado o una letra."
+modo_figura="separados"
+titulo_comparar=None
+etiqueta_pasos=None
+etiqueta_pares=None
+boton_separados=None
+boton_misma=None
 
 
 def ocultar_pantallas():
@@ -264,12 +270,33 @@ def tamano_usado():
         alto=280
     return ancho, alto
 
-def redibujar_comparacion():
-    # No recibe datos.
-    # Vuelve a dibujar los dos triángulos, las marcas y la parte elegida.
+def resaltar_parte_compartida(ancho, alto, tipo, nombre):
+    # Recibe el tamaño del lienzo, el tipo y el nombre de la parte.
+    # La pinta de azul en la figura compartida.
     # No devuelve nada.
-    ancho, alto=tamano_usado()
-    lienzo_comparar.delete("all")
+    parte={}
+    parte["tipo"]=tipo
+    parte["nombre"]=nombre
+    dibujar_parte_compartida(lienzo_comparar, ancho, alto, parte, "#2f6fed")
+
+def redibujar_figura_compartida(ancho, alto):
+    # Recibe el ancho y el alto del lienzo.
+    # Dibuja △ABD y △ACD, las marcas y lo que está elegido.
+    # No devuelve nada.
+    dibujar_figura_compartida(lienzo_comparar, ancho, alto)
+    dibujar_marcas_compartidas(lienzo_comparar, ancho, alto, marcas)
+    if par_pendiente!=None:
+        resaltar_parte_compartida(ancho, alto, par_pendiente["tipo"], par_pendiente["parte_abc"])
+        if par_pendiente["parte_abc"]!=par_pendiente["parte_def"]:
+            resaltar_parte_compartida(ancho, alto, par_pendiente["tipo"], par_pendiente["parte_def"])
+        return
+    if parte_elegida!=None:
+        dibujar_parte_compartida(lienzo_comparar, ancho, alto, parte_elegida, "#2f6fed")
+
+def redibujar_triangulos_separados(ancho, alto):
+    # Recibe el ancho y el alto del lienzo.
+    # Dibuja △ABC y △DEF, las marcas y lo que está elegido.
+    # No devuelve nada.
     dibujar_dos_triangulos(lienzo_comparar, ancho, alto)
     dibujar_marcas(lienzo_comparar, ancho, alto, marcas)
     if par_pendiente!=None:
@@ -283,8 +310,20 @@ def redibujar_comparacion():
         parte_def["nombre"]=par_pendiente["parte_def"]
         dibujar_parte_resaltada(lienzo_comparar, ancho, alto, parte_abc, "#2f6fed")
         dibujar_parte_resaltada(lienzo_comparar, ancho, alto, parte_def, "#2f6fed")
-    elif parte_elegida!=None:
+        return
+    if parte_elegida!=None:
         dibujar_parte_resaltada(lienzo_comparar, ancho, alto, parte_elegida, "#2f6fed")
+
+def redibujar_comparacion():
+    # No recibe datos.
+    # Vuelve a dibujar la figura activa, las marcas y la parte elegida.
+    # No devuelve nada.
+    ancho, alto=tamano_usado()
+    lienzo_comparar.delete("all")
+    if modo_figura=="misma":
+        redibujar_figura_compartida(ancho, alto)
+        return
+    redibujar_triangulos_separados(ancho, alto)
 
 def crear_celda(fila, columna, mensaje, es_encabezado, es_conclusion):
     # Recibe la fila, la columna, el texto y si es título o conclusión.
@@ -326,7 +365,7 @@ def llenar_tabla():
     filas=filas_de_la_comprobacion(marcas)
     numero=1
     for fila in filas:
-        es_conclusion=fila[0]=="△ABC ≅ △DEF"
+        es_conclusion=fila[0]==texto_de_los_triangulos()
         crear_celda(numero, 0, fila[0], False, es_conclusion)
         crear_celda(numero, 1, fila[1], False, es_conclusion)
         numero=numero+1
@@ -362,12 +401,31 @@ def ocultar_razones():
     # No devuelve nada.
     marco_razones.grid_remove()
 
+def es_del_primer_triangulo(parte):
+    # Recibe una parte tocada en el dibujo.
+    # Dice si pertenece a △ABC o a △ABD, el triángulo de la izquierda.
+    # Devuelve True o False.
+    if parte["triangulo"]=="ABC":
+        return True
+    if parte["triangulo"]=="ABD":
+        return True
+    return False
+
+def es_lado_comun(parte):
+    # Recibe una parte tocada en el dibujo.
+    # Dice si es el lado AD, que está en los dos triángulos.
+    # Devuelve True o False.
+    if "comun" in parte:
+        if parte["comun"]==True:
+            return True
+    return False
+
 def guardar_par_pendiente(primera, segunda):
     # Recibe las dos partes elegidas, una de cada triángulo.
-    # Las ordena para que una sea de ABC y la otra de DEF.
+    # Las ordena: primero △ABC o △ABD, después el otro triángulo.
     # No devuelve nada. Deja el par listo para la razón.
     global par_pendiente
-    if primera["triangulo"]=="ABC":
+    if es_del_primer_triangulo(primera):
         parte_abc=primera["nombre"]
         parte_def=segunda["nombre"]
     else:
@@ -377,6 +435,21 @@ def guardar_par_pendiente(primera, segunda):
     par_pendiente["tipo"]=primera["tipo"]
     par_pendiente["parte_abc"]=parte_abc
     par_pendiente["parte_def"]=parte_def
+
+def preparar_lado_comun(parte):
+    # Recibe el lado AD, tocado una sola vez.
+    # Deja listo el par AD ≅ AD para elegir la razón.
+    # No devuelve nada.
+    global par_pendiente
+    global parte_elegida
+    global aviso
+    par_pendiente={}
+    par_pendiente["tipo"]="lado"
+    par_pendiente["parte_abc"]=parte["nombre"]
+    par_pendiente["parte_def"]=parte["nombre"]
+    parte_elegida=parte
+    aviso="Este lado está en los dos triángulos. Elige el porqué."
+    mostrar_razones()
 
 def indice_de_la_marca(par):
     # Recibe un par de partes, por ejemplo AB con DE.
@@ -392,9 +465,17 @@ def indice_de_la_marca(par):
         indice=indice+1
     return -1
 
+def parte_bajo_el_clic_actual(x, y, ancho, alto):
+    # Recibe el clic y el tamaño del lienzo.
+    # Busca la parte en la figura que está activa.
+    # Devuelve la parte. Si el clic cayó fuera, devuelve None.
+    if modo_figura=="misma":
+        return parte_de_la_figura_compartida(x, y, ancho, alto)
+    return parte_bajo_el_clic(x, y, ancho, alto)
+
 def procesar_clic(x, y):
     # Recibe las coordenadas del clic en el lienzo.
-    # Elige la primera parte o completa el par con la segunda.
+    # Elige la primera parte, completa el par, o marca AD con un solo clic.
     # No devuelve nada. Si el par está listo, pide la razón.
     global parte_elegida
     global par_pendiente
@@ -404,27 +485,40 @@ def procesar_clic(x, y):
         parte_elegida=None
         ocultar_razones()
     ancho, alto=tamano_usado()
-    parte=parte_bajo_el_clic(x, y, ancho, alto)
+    parte=parte_bajo_el_clic_actual(x, y, ancho, alto)
     if parte==None:
-        aviso="Haz clic sobre la línea de un lado o sobre la letra de un ángulo."
+        if modo_figura=="misma":
+            aviso="Toca un lado o el nombre de un ángulo."
+        else:
+            aviso="Toca la línea del lado, o la letra."
+        actualizar_comparacion()
+        return
+    if es_lado_comun(parte):
+        preparar_lado_comun(parte)
         actualizar_comparacion()
         return
     if parte_elegida==None:
         parte_elegida=parte
-        aviso="Ahora elige una parte del mismo tipo en el otro triángulo."
+        if modo_figura=="misma":
+            aviso="Ahora toca la parte igual en el otro triángulo."
+        else:
+            aviso="Ahora toca el otro triángulo."
         actualizar_comparacion()
         return
     if parte["triangulo"]==parte_elegida["triangulo"]:
         parte_elegida=parte
-        aviso="Esa parte es del mismo triángulo. Elige una parte del otro."
+        aviso="Ese es el mismo triángulo. Toca el otro."
         actualizar_comparacion()
         return
     if parte["tipo"]!=parte_elegida["tipo"]:
-        aviso="Un lado se compara con un lado y un ángulo con un ángulo."
+        if modo_figura=="misma":
+            aviso="Un lado va con un lado. Un ángulo va con un ángulo."
+        else:
+            aviso="Un lado va con un lado. Una letra va con una letra."
         actualizar_comparacion()
         return
     guardar_par_pendiente(parte_elegida, parte)
-    aviso="Elige la razón de esta congruencia."
+    aviso="Elige por qué son iguales."
     mostrar_razones()
     actualizar_comparacion()
 
@@ -447,7 +541,7 @@ def confirmar_razon(razon):
     indice=indice_de_la_marca(par_pendiente)
     if indice>=0:
         marcas[indice]["razon"]=razon
-        aviso="Se cambió la razón de esa marca."
+        aviso="Cambié el porqué de esa marca."
     else:
         marca={}
         marca["tipo"]=par_pendiente["tipo"]
@@ -455,7 +549,7 @@ def confirmar_razon(razon):
         marca["parte_def"]=par_pendiente["parte_def"]
         marca["razon"]=razon
         marcas.append(marca)
-        aviso="Marca agregada. Puedes elegir otro par."
+        aviso="Listo. Puedes marcar otro."
     par_pendiente=None
     parte_elegida=None
     ocultar_razones()
@@ -479,11 +573,11 @@ def quitar_ultima_marca():
     parte_elegida=None
     ocultar_razones()
     if len(marcas)==0:
-        aviso="No hay marcas para quitar."
+        aviso="No hay nada para quitar."
         actualizar_comparacion()
         return
     del marcas[len(marcas)-1]
-    aviso="Se quitó la última marca."
+    aviso="Quité la última marca."
     actualizar_comparacion()
 
 def borrar_marcas():
@@ -497,7 +591,7 @@ def borrar_marcas():
     marcas=[]
     parte_elegida=None
     par_pendiente=None
-    aviso="Se borraron las marcas."
+    aviso="Borré las marcas."
     ocultar_razones()
     actualizar_comparacion()
 
@@ -518,16 +612,26 @@ def crear_boton_de_razon(marco, mensaje, fila, columna):
     boton.bind("<Button-1>", al_elegir_razon)
     return boton
 
+def razones_del_modo():
+    # No recibe datos.
+    # En separados solo ofrece Dado. En la misma figura ofrece las cinco razones.
+    # Devuelve los grupos de botones.
+    if modo_figura=="separados":
+        return [["Dado"]]
+    return [
+        ["Punto medio", "Bisectriz"],
+        ["Lado común", "Propiedad reflexiva"],
+        ["Dado"],
+    ]
+
 def armar_razones(marco):
     # Recibe el marco de las razones.
-    # Pone un botón por cada razón que se usa en la tabla.
+    # Borra los botones y pone los de la figura activa.
     # No devuelve nada.
-    razones=[
-        ["Dado", "Bisectriz"],
-        ["Punto medio", "Lado común"],
-        ["Propiedad reflexiva", "Perpendicular"],
-        ["Ángulos opuestos por el vértice"],
-    ]
+    hijos=marco.winfo_children()
+    for hijo in hijos:
+        hijo.destroy()
+    razones=razones_del_modo()
     fila=0
     for grupo in razones:
         columna=0
@@ -542,6 +646,110 @@ def armar_razones(marco):
         marco.grid_columnconfigure(columna, weight=1)
         columna=columna+1
 
+def armar_instrucciones(panel):
+    # Recibe el panel de la derecha.
+    # Escribe los pasos, en frases cortas, arriba de la tabla.
+    # No devuelve nada. Guarda las etiquetas para cambiarlas al cambiar de figura.
+    global etiqueta_pasos
+    global etiqueta_pares
+    caja=tk.Frame(panel, bg="#ffffff", highlightbackground="#cbd5e1", highlightthickness=1)
+    caja.grid(row=0, column=0, sticky="ew", pady=(0, 6))
+
+    titulo=tk.Label(
+        caja,
+        text="Cómo hacerlo",
+        font=("Segoe UI", 15, "bold"),
+        bg="#ffffff",
+        fg="#1d3557",
+        anchor="w",
+    )
+    titulo.grid(row=0, column=0, sticky="ew", padx=12, pady=(8, 2))
+
+    etiqueta_pasos=tk.Label(
+        caja,
+        text="",
+        font=("Segoe UI", 13),
+        bg="#ffffff",
+        fg="#1d3557",
+        justify="left",
+        anchor="w",
+    )
+    etiqueta_pasos.grid(row=1, column=0, sticky="ew", padx=12)
+
+    etiqueta_pares=tk.Label(
+        caja,
+        text="",
+        font=("Segoe UI", 12),
+        bg="#ffffff",
+        fg="#33415c",
+        justify="left",
+        anchor="w",
+    )
+    etiqueta_pares.grid(row=2, column=0, sticky="ew", padx=12, pady=(6, 10))
+
+def escribir_instrucciones():
+    # No recibe datos.
+    # Cambia los pasos y la nota según Separados o Misma figura.
+    # No devuelve nada.
+    if modo_figura=="separados":
+        etiqueta_pasos.config(text="1. Toca un lado o una letra.\n2. Toca lo mismo en el otro triángulo.\n3. Elige por qué son iguales.")
+        etiqueta_pares.config(text="A va con D.   B va con E.   C va con F.\nEl tamaño del dibujo no importa.")
+        titulo_comparar.config(text="Comparar △ABC y △DEF")
+        return
+    etiqueta_pasos.config(text="1. Toca dos partes iguales, o toca AD si es el lado de en medio.\n2. Elige el porqué: punto medio, bisectriz, lado común o reflexiva.")
+    etiqueta_pares.config(text="D está en la mitad de BC.\nAD parte el ángulo A y está en los dos triángulos.")
+    titulo_comparar.config(text="Comparar △ABD y △ACD")
+
+def pintar_botones_de_modo():
+    # No recibe datos.
+    # Pinta de color el botón de la figura que está activa.
+    # No devuelve nada.
+    if modo_figura=="separados":
+        boton_separados.config(bg="#2f6fed", fg="#ffffff", activebackground="#2f6fed", activeforeground="#ffffff")
+        boton_misma.config(bg="#ffffff", fg="#1d3557", activebackground="#d9e6fb", activeforeground="#1d3557")
+        return
+    boton_separados.config(bg="#ffffff", fg="#1d3557", activebackground="#d9e6fb", activeforeground="#1d3557")
+    boton_misma.config(bg="#0f766e", fg="#ffffff", activebackground="#0f766e", activeforeground="#ffffff")
+
+def poner_modo(modo):
+    # Recibe "separados" o "misma".
+    # Cambia la figura, borra las marcas y cambia las razones.
+    # No devuelve nada.
+    global modo_figura
+    global marcas
+    global parte_elegida
+    global par_pendiente
+    global aviso
+    if modo_figura==modo:
+        return
+    modo_figura=modo
+    marcas=[]
+    parte_elegida=None
+    par_pendiente=None
+    if modo=="separados":
+        usar_triangulos_separados()
+        aviso="Toca un lado o una letra."
+    else:
+        usar_misma_figura()
+        aviso="Toca dos partes, o toca el lado AD."
+    armar_razones(marco_razones)
+    ocultar_razones()
+    escribir_instrucciones()
+    pintar_botones_de_modo()
+    actualizar_comparacion()
+
+def al_elegir_separados():
+    # No recibe datos.
+    # Pasa a los dos triángulos separados.
+    # No devuelve nada.
+    poner_modo("separados")
+
+def al_elegir_misma():
+    # No recibe datos.
+    # Pasa a △ABD y △ACD en la misma figura.
+    # No devuelve nada.
+    poner_modo("misma")
+
 def armar_comparar(marco):
     # Recibe el marco de la geometría.
     # Arma el lienzo, los botones de razón, la tabla y el resultado.
@@ -552,16 +760,20 @@ def armar_comparar(marco):
     global etiqueta_resultado
     global marco_filas
     global marco_razones
+    global titulo_comparar
+    global boton_separados
+    global boton_misma
+    usar_triangulos_separados()
     marco_comparar=tk.Frame(marco, bg="#eef3fa")
 
-    titulo=tk.Label(
+    titulo_comparar=tk.Label(
         marco_comparar,
         text="Comparar △ABC y △DEF",
         font=("Segoe UI", 20, "bold"),
         bg="#eef3fa",
         fg="#1d3557",
     )
-    titulo.grid(row=0, column=0, pady=(8, 2))
+    titulo_comparar.grid(row=0, column=0, pady=(8, 2))
 
     barra=tk.Frame(marco_comparar, bg="#eef3fa")
     barra.grid(row=1, column=0, sticky="ew", padx=16)
@@ -573,17 +785,24 @@ def armar_comparar(marco):
     boton_menu.grid(row=0, column=3, sticky="e")
     barra.grid_columnconfigure(2, weight=1)
 
-    ayuda=tk.Label(
-        marco_comparar,
-        text="1. Clic en un lado o en la letra de un ángulo.  2. Clic en una parte del mismo tipo en el otro triángulo.  3. Elige la razón.",
-        font=("Segoe UI", 12),
+    modos=tk.Frame(marco_comparar, bg="#eef3fa")
+    modos.grid(row=2, column=0, sticky="w", padx=16, pady=(4, 0))
+    texto_modo=tk.Label(
+        modos,
+        text="Figura:",
+        font=("Segoe UI", 14, "bold"),
         bg="#eef3fa",
-        fg="#33415c",
+        fg="#1d3557",
     )
-    ayuda.grid(row=2, column=0, padx=16, pady=(4, 2), sticky="ew")
+    texto_modo.grid(row=0, column=0, padx=(0, 8))
+    boton_separados=crear_boton_blanco(modos, "Separados", al_elegir_separados)
+    boton_separados.grid(row=0, column=1, padx=(0, 8))
+    boton_misma=crear_boton_blanco(modos, "Misma figura", al_elegir_misma)
+    boton_misma.grid(row=0, column=2)
+    pintar_botones_de_modo()
 
     zona=tk.Frame(marco_comparar, bg="#eef3fa")
-    zona.grid(row=3, column=0, padx=16, pady=(0, 10), sticky="nsew")
+    zona.grid(row=3, column=0, padx=16, pady=(8, 10), sticky="nsew")
 
     lienzo_comparar=tk.Canvas(
         zona,
@@ -599,16 +818,8 @@ def armar_comparar(marco):
     panel=tk.Frame(zona, bg="#eef3fa")
     panel.grid(row=0, column=1, sticky="nsew")
 
-    nota=tk.Label(
-        panel,
-        text="El dibujo es un esquema. La congruencia se decide por las marcas y el criterio, no por el tamaño en la pantalla. Correspondencia: A con D, B con E y C con F.",
-        font=("Segoe UI", 11),
-        bg="#eef3fa",
-        fg="#33415c",
-        wraplength=460,
-        justify="left",
-    )
-    nota.grid(row=0, column=0, sticky="ew")
+    armar_instrucciones(panel)
+    escribir_instrucciones()
 
     etiqueta_aviso=tk.Label(
         panel,
@@ -665,8 +876,8 @@ def armar_comparar(marco):
 
     marco_comparar.grid_columnconfigure(0, weight=1)
     marco_comparar.grid_rowconfigure(3, weight=1)
-    zona.grid_columnconfigure(0, weight=3)
-    zona.grid_columnconfigure(1, weight=2, minsize=420)
+    zona.grid_columnconfigure(0, weight=1)
+    zona.grid_columnconfigure(1, weight=1, minsize=480)
     zona.grid_rowconfigure(0, weight=1)
     panel.grid_columnconfigure(0, weight=1)
 
