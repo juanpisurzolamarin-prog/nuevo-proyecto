@@ -1,0 +1,15 @@
+---
+description: Reglas del proyecto de factorización para octavo
+alwaysApply: true
+---
+
+# Reglas del proyecto
+
+Sigue el archivo `reglas.md` de la carpeta del proyecto.
+
+- El autor tiene 13 años, está en octavo y va a mostrar el proyecto a su profesora.
+- Español claro en comentarios, nombres y textos de la pantalla.
+- Una función, una tarea. Comentario encima: qué recibe, qué hace y qué devuelve.
+- Preferir `if`, `for` y variables claras. Evitar clases, lambdas y trucos de una línea.
+- Cada caso de factorización va en su propia función.
+- La interfaz solo pide la expresión y muestra el caso y el resultado.
