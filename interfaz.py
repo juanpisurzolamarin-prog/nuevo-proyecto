@@ -17,6 +17,8 @@ from algebra.casos.suma_o_diferencia_de_potencias import resolver_suma_o_diferen
 from algebra.casos.cuadrado_de_binomio import resolver_cuadrado_de_binomio, plan_del_caso as plan_cuadrado
 from algebra.casos.cubo_de_binomio import resolver_cubo_de_binomio, resolver_cubo_perfecto, plan_del_desarrollo, plan_de_la_factorizacion
 from geometria.pantalla import armar_pantalla_geometria, mostrar_inicio_geometria
+from ecuaciones.pantalla import armar_pantalla_ecuaciones, mostrar_inicio_ecuaciones, la_resolucion_esta_visible, mostrar_el_resultado
+from introduccion.pantalla import armar_pantalla_introduccion, poner_opcion_en_el_inicio
 
 # Estos se llenan cuando se abre la ventana.
 # Los botones los usan para escribir y para mostrar el resultado.
@@ -29,6 +31,8 @@ marco_menu=None
 marco_factorizar=None
 marco_plan=None
 marco_geometria=None
+marco_ecuaciones=None
+marco_introduccion=None
 titulo_del_plan=None
 cuadro_del_plan=None
 
@@ -216,8 +220,11 @@ def crear_boton(ventana,texto,fila,columna,columnas=1):
 
 def al_presionar_enter(evento):
     # Recibe la tecla Enter.
-    # Muestra el resultado de la expresión que está escrita.
+    # Si está abierta la ecuación, la resuelve. Si no, factoriza la expresión.
     # No devuelve nada.
+    if la_resolucion_esta_visible():
+        mostrar_el_resultado()
+        return
     mostrar_resultado()
 
 def cargar_logo(ventana):
@@ -255,13 +262,15 @@ def nombres_de_los_casos():
 
 def ocultar_marcos():
     # No recibe datos.
-    # Esconde el inicio, el álgebra, la factorización, el plan y la geometría.
+    # Esconde el inicio, la introducción, el álgebra, la factorización, el plan, la geometría y las ecuaciones.
     # No devuelve nada.
     marco_inicio.grid_remove()
+    marco_introduccion.grid_remove()
     marco_menu.grid_remove()
     marco_factorizar.grid_remove()
     marco_plan.grid_remove()
     marco_geometria.grid_remove()
+    marco_ecuaciones.grid_remove()
 
 def mostrar_geometria():
     # No recibe datos.
@@ -271,9 +280,24 @@ def mostrar_geometria():
     marco_geometria.grid(row=0, column=0, sticky="nsew")
     mostrar_inicio_geometria()
 
+def mostrar_ecuaciones():
+    # No recibe datos.
+    # Abre las ecuaciones de primer grado en el inicio de esa sección.
+    # No devuelve nada.
+    ocultar_marcos()
+    marco_ecuaciones.grid(row=0,column=0,sticky="nsew")
+    mostrar_inicio_ecuaciones()
+
+def mostrar_introduccion(evento):
+    # Recibe el clic de la tarjeta de introducción.
+    # Abre la página que explica el proyecto.
+    # No devuelve nada.
+    ocultar_marcos()
+    marco_introduccion.grid(row=0,column=0,sticky="nsew")
+
 def mostrar_menu():
     # No recibe datos.
-    # Muestra los dos temas: álgebra y geometría.
+    # Muestra la introducción y los tres temas.
     # No devuelve nada.
     ocultar_marcos()
     marco_inicio.grid(row=0,column=0,sticky="nsew")
@@ -348,6 +372,19 @@ def dibujar_icono_geometria(lienzo):
     lienzo.create_text(34,16,text="A",font=("Segoe UI",12,"bold"),fill="#c1121f")
     lienzo.create_text(118,16,text="D",font=("Segoe UI",12,"bold"),fill="#c1121f")
 
+def dibujar_icono_ecuaciones(lienzo):
+    # Recibe el lienzo del botón de ecuaciones.
+    # Dibuja una ecuación corta para reconocer el tema.
+    # No devuelve nada.
+    lienzo.create_text(90,48,text="2(x+3)",font=("Segoe UI",22,"bold"),fill="#b45309")
+    lienzo.create_text(90,88,text="= 10",font=("Segoe UI",22,"bold"),fill="#1d3557")
+
+def al_pulsar_ecuaciones(evento):
+    # Recibe el clic de la tarjeta de ecuaciones.
+    # Abre las ecuaciones de primer grado.
+    # No devuelve nada.
+    mostrar_ecuaciones()
+
 def enlazar_clic(widget,funcion):
     # Recibe un cuadro y la función que debe correr al hacer clic.
     # Pone ese clic en el cuadro y en lo que tiene dentro, como el icono.
@@ -373,7 +410,7 @@ def crear_tarjeta(marco,titulo,detalle,color,dibujar,al_pulsar,columna):
     # Arma un botón grande con icono para un tema.
     # No devuelve nada.
     tarjeta=tk.Frame(marco,bg="#ffffff",highlightbackground=color,highlightthickness=3,cursor="hand2")
-    tarjeta.grid(row=4,column=columna,padx=24,pady=12,sticky="nsew")
+    tarjeta.grid(row=5,column=columna,padx=24,pady=12,sticky="nsew")
     lienzo=tk.Canvas(tarjeta,width=180,height=120,bg="#ffffff",highlightthickness=0,cursor="hand2")
     lienzo.grid(row=0,column=0,padx=36,pady=(18,0))
     dibujar(lienzo)
@@ -386,11 +423,11 @@ def crear_tarjeta(marco,titulo,detalle,color,dibujar,al_pulsar,columna):
 
 def armar_inicio(marco):
     # Recibe el marco de la pantalla inicial.
-    # Pone el nombre del estudiante y los dos temas, cada uno con su icono.
+    # Pone el nombre del estudiante, la introducción y los tres temas.
     # No devuelve nada.
     logo=cargar_logo(marco)
     if logo!=None:
-        logo.grid(row=0,column=0,columnspan=2,pady=(16,0))
+        logo.grid(row=0,column=0,columnspan=3,pady=(16,0))
 
     titulo=tk.Label(
         marco,
@@ -399,7 +436,7 @@ def armar_inicio(marco):
         bg="#eef3fa",
         fg="#1d3557",
     )
-    titulo.grid(row=1,column=0,columnspan=2,pady=(8,0))
+    titulo.grid(row=1,column=0,columnspan=3,pady=(8,0))
 
     estudiante=tk.Label(
         marco,
@@ -408,21 +445,24 @@ def armar_inicio(marco):
         bg="#eef3fa",
         fg="#1d3557",
     )
-    estudiante.grid(row=2,column=0,columnspan=2,pady=(0,4))
+    estudiante.grid(row=2,column=0,columnspan=3,pady=(0,4))
 
     ayuda=tk.Label(
         marco,
-        text="Elige un tema.",
+        text="Elige la introducción o un tema.",
         font=("Segoe UI",14),
         bg="#eef3fa",
         fg="#33415c",
     )
-    ayuda.grid(row=3,column=0,columnspan=2,pady=(0,8))
+    ayuda.grid(row=3,column=0,columnspan=3,pady=(0,8))
 
+    poner_opcion_en_el_inicio(marco,mostrar_introduccion)
     crear_tarjeta(marco,"Álgebra","Factorización","#2f6fed",dibujar_icono_algebra,al_pulsar_algebra,0)
     crear_tarjeta(marco,"Geometría","Congruencia de triángulos","#0f766e",dibujar_icono_geometria,al_pulsar_geometria,1)
+    crear_tarjeta(marco,"Ecuaciones","Primer grado","#b45309",dibujar_icono_ecuaciones,al_pulsar_ecuaciones,2)
     marco.grid_columnconfigure(0,weight=1)
     marco.grid_columnconfigure(1,weight=1)
+    marco.grid_columnconfigure(2,weight=1)
 
 def armar_menu(marco):
     # Recibe el marco del álgebra.
@@ -665,13 +705,15 @@ def armar_factorizar(marco):
 
 def crear_ventana():
     # No recibe datos.
-    # Arma el inicio, el álgebra, la factorización, el plan y la congruencia.
+    # Arma el inicio, la introducción, el álgebra, la factorización, el plan, la congruencia y las ecuaciones.
     # Devuelve la ventana para poder mostrarla.
     global marco_inicio
     global marco_menu
     global marco_factorizar
     global marco_plan
     global marco_geometria
+    global marco_ecuaciones
+    global marco_introduccion
 
     ventana=tk.Tk()
     ventana.title("Matemáticas 8C")
@@ -684,11 +726,15 @@ def crear_ventana():
     marco_factorizar=tk.Frame(ventana,bg="#eef3fa")
     marco_plan=tk.Frame(ventana,bg="#eef3fa")
     marco_geometria=tk.Frame(ventana,bg="#eef3fa")
+    marco_ecuaciones=tk.Frame(ventana,bg="#eef3fa")
+    marco_introduccion=tk.Frame(ventana,bg="#eef3fa")
     armar_inicio(marco_inicio)
     armar_menu(marco_menu)
     armar_factorizar(marco_factorizar)
     armar_plan(marco_plan)
     armar_pantalla_geometria(marco_geometria, mostrar_menu)
+    armar_pantalla_ecuaciones(marco_ecuaciones, mostrar_menu)
+    armar_pantalla_introduccion(marco_introduccion, mostrar_menu)
 
     ventana.grid_columnconfigure(0,weight=1)
     ventana.grid_rowconfigure(0,weight=1)

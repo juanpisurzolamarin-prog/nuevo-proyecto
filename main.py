@@ -1,6 +1,8 @@
 # Este archivo abre el proyecto.
 # La pantalla está en interfaz.py.
 # El álgebra está en la carpeta algebra. La geometría está en la carpeta geometria.
+# Las ecuaciones están en la carpeta ecuaciones.
+# La introducción está en la carpeta introduccion.
 
 from interfaz import crear_ventana
 

@@ -30,6 +30,8 @@ def obtener_coeficiente(termino):
 
 - El álgebra está en la carpeta `algebra`: la lectura de expresiones y cada caso de factorización.
 - La geometría está en la carpeta `geometria`, sin mezclarla con el álgebra.
+- Las ecuaciones están en la carpeta `ecuaciones`, sin mezclarlas con los otros temas.
+- La introducción está en la carpeta `introduccion`. Explica el objetivo, las herramientas y lo aprendido. No hace cuentas.
 
 ## Congruencia de triángulos
 
@@ -37,3 +39,13 @@ def obtener_coeficiente(termino):
 - La pantalla explica los conceptos, dibuja dos triángulos y muestra la tabla de afirmación y razón.
 - El dibujo es un esquema. La congruencia se decide por las marcas y el criterio.
 - En la comparación se hace clic en un lado o en la letra de un ángulo, luego en la parte del otro triángulo, y se elige la razón.
+
+## Ecuaciones de primer grado
+
+- Van en la carpeta `ecuaciones`, sin mezclarlas con el álgebra ni con la geometría.
+- Se reconoce una ecuación si tiene un solo igual y la única letra es x.
+- Cada paso va en su propia función: paréntesis, términos semejantes, organizar y despejar.
+- La pantalla tiene un submenú: sin fracciones y con fracciones. Cada una tiene su definición, su proceso y su pantalla para resolver.
+- En las fraccionarias, el denominador es un monomio. Si no aparece, es 1.
+- El primer paso es el mínimo común múltiplo de los denominadores, con números primos. Después se resuelve como una ecuación de primer grado.
+- Hay un botón para agregar una fracción con su numerador y su denominador.
